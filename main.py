@@ -59,6 +59,8 @@ def get_party(pyboy: PyBoy):
 def run_pyboy():
     global current_frame
     pyboy.game_wrapper.start_game()
+    with open("state_file.state", "rb") as f:
+      pyboy.load_state(f)
     while True:
         pyboy.tick()
         with frame_lock:
@@ -159,17 +161,43 @@ def saveGame():
     with open("state_file.state", "wb") as f:
       pyboy.save_state(f)
     return Response("Game Saved", mimetype='text/plain')
-    
+
+def getAvailableMoves():
+   collisionArea = pyboy.game_wrapper.game_area_collision()
+   m = {}
+   m["left"] = collisionArea[8][7] == 1
+   m["right"] = collisionArea[8][10] == 1
+   m["up"] = collisionArea[7][8] == 1
+   m["down"] = collisionArea[10][8] == 1
+   return m
+
 @app.route('/state')
 def state():
     x,y,map = get_game_coords(pyboy=pyboy)
     party = get_party(pyboy=pyboy)
     partyAsText = ""
+    moves = getAvailableMoves()
+    movesTxt = ""
+    for k in moves:
+       if moves[k]:
+          movesTxt = movesTxt + k + ","
     for i in range(len(party)):
-        partyAsText += "Pokemon " + str(i) + ": " + party[i].name + " HP: " + str(party[i].currentHp) + "/" + str(party[i].maxHp) + "\n"
-    return Response("GameCoords: X: " + str(x) + ", Y: " + str(y) + ",MAPAREA:" + str(map) + "\n Party: " + partyAsText, mimetype='text/plain')
+        partyAsText += "Pokemon " + str(i+1) + ": " + party[i].name + " HP: " + str(party[i].currentHp) + "/" + str(party[i].maxHp) + "\n"
+    return Response(
+       "GameCoords: X: " 
+       + str(x) 
+       + ", Y: " 
+       + str(y) 
+       + ",MAPAREA:" 
+       + str(map) 
+       + "\nParty: " 
+       + partyAsText
+       + "\nAvailable Key Presses: " + movesTxt,
+       mimetype='text/plain')
 
-
+@app.route('/collision')
+def collision():
+   return Response(str(pyboy.game_wrapper.game_area_collision()), mimetype="text/plain")
 
 if __name__ == '__main__':
     run_pyboy()
