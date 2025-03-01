@@ -78,50 +78,50 @@ def index():
 
 @app.route('/a')
 def press_a():
-  pyboy.button('a', delay=30)
+  pyboy.button('a', delay=15)
   return Response("a pressed", mimetype='text/plain')
 
 @app.route('/b')
 def press_b():
-  pyboy.button('b', delay=30)
+  pyboy.button('b', delay=15)
   return Response("b pressed", mimetype='text/plain')
 
 @app.route('/down')
 def press_down():
-  pyboy.button('down', delay=30)
+  pyboy.button('down', delay=15)
   return Response("down pressed", mimetype='text/plain')
 
 
 @app.route('/up')
 def press_up():
-  pyboy.button('up', delay=30)
+  pyboy.button('up', delay=15)
   return Response("up pressed", mimetype='text/plain')
 
 
 @app.route('/left')
 def press_left():
-  pyboy.button('left', delay=30)
+  pyboy.button('left', delay=15)
   return Response("left pressed", mimetype='text/plain')
 
 
 
 @app.route('/right')
 def press_right():
-  pyboy.button('right', delay=30)
+  pyboy.button('right', delay=15)
   return Response("right pressed", mimetype='text/plain')
 
 
 
 @app.route('/start')
 def press_start():
-  pyboy.button('start', delay=30)
+  pyboy.button('start', delay=15)
   return Response("start pressed", mimetype='text/plain')
 
 
 
 @app.route('/select')
 def press_select():
-  pyboy.button('select', delay=30)
+  pyboy.button('select', delay=15)
   return Response("select pressed", mimetype='text/plain')
 
 def generate_frames():
@@ -154,6 +154,12 @@ def frame():
       img_io.seek(0)
       return Response(img_io.read(), mimetype='image/png')
     
+@app.route('/save')
+def saveGame():
+    with open("state_file.state", "wb") as f:
+      pyboy.save_state(f)
+    return Response("Game Saved", mimetype='text/plain')
+    
 @app.route('/state')
 def state():
     x,y,map = get_game_coords(pyboy=pyboy)
@@ -161,7 +167,7 @@ def state():
     partyAsText = ""
     for i in range(len(party)):
         partyAsText += "Pokemon " + str(i) + ": " + party[i].name + " HP: " + str(party[i].currentHp) + "/" + str(party[i].maxHp) + "\n"
-    return Response("GameCoords: " + str(x) + "," + str(y) + "," + str(map) + "\n Party: " + partyAsText, mimetype='text/plain')
+    return Response("GameCoords: X: " + str(x) + ", Y: " + str(y) + ",MAPAREA:" + str(map) + "\n Party: " + partyAsText, mimetype='text/plain')
 
 
 
