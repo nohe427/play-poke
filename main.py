@@ -3,7 +3,7 @@ from pyboy import PyBoy
 import io
 import threading
 import time
-from utils.dectopoke import pokemon_map
+from utils.dectopoke import pokemon_map, regions
 
 
 app = Flask(__name__)
@@ -64,7 +64,7 @@ def run_pyboy():
     while True:
         pyboy.tick()
         with frame_lock:
-            current_frame = pyboy.screen.image.resize((640, 480))
+            current_frame = pyboy.screen.image.resize((640, 640))
         time.sleep(0.01)
 
 def run_flask():
@@ -174,6 +174,10 @@ def getAvailableMoves():
 @app.route('/state')
 def state():
     x,y,map = get_game_coords(pyboy=pyboy)
+    regionName = ""
+    for region in regions:
+       if region["id"] == str(map):
+          regionName = region["name"]
     party = get_party(pyboy=pyboy)
     partyAsText = ""
     moves = getAvailableMoves()
@@ -187,9 +191,9 @@ def state():
        "GameCoords: X: " 
        + str(x) 
        + ", Y: " 
-       + str(y) 
-       + ",MAPAREA:" 
-       + str(map) 
+       + str(y)
+       +"\nArea Name:"
+       + str(regionName)
        + "\nParty: " 
        + partyAsText
        + "\nAvailable Key Presses: " + movesTxt,
