@@ -159,6 +159,7 @@ def frame():
 @app.route('/save')
 def saveGame():
     with open("state_file.state", "wb") as f:
+      f.seek(0)
       pyboy.save_state(f)
     return Response("Game Saved", mimetype='text/plain')
 
