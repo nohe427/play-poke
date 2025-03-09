@@ -4,12 +4,14 @@ import io
 import threading
 import time
 from utils.dectopoke import pokemon_map, regions
-
+from utils.items import generate_constants
 
 app = Flask(__name__)
 
 # Initialize PyBoy (replace 'path/to/your/rom.gb' with the actual path)
 pyboy = PyBoy('red/red.gb')
+
+all_items = generate_constants()
 
 #Global image variable
 current_frame = None
@@ -36,6 +38,8 @@ MONEY_ADDRESS_1 = 0xD347
 MONEY_ADDRESS_2 = 0xD348
 MONEY_ADDRESS_3 = 0xD349
 
+ITEM_ADDRESSES = [0xD31E, 0XD320, 0xD322, 0xD324, 0xD326, 0xD328, 0xD32A, 0xD32C, 0xD32E, 0xD330, 0xD332, 0xD334, 0xD336, 0xD338, 0xD33A, 0xD33C, 0xD33E, 0xD340, 0xD342, 0xD344]
+
 class PartyPoke():
    name = ""
    currentHp = ""
@@ -55,6 +59,15 @@ def get_party(pyboy: PyBoy):
             party.append(x)
         return party
 
+def get_inventory(pyboy: PyBoy):
+    inventory = []
+    for i in range(len(ITEM_ADDRESSES)):
+        item_address = ITEM_ADDRESSES[i]
+        count = item_address + 1
+        item_name = all_items[pyboy.memory[item_address]] if pyboy.memory[item_address] != 255 and pyboy.memory[item_address] != 0  else 'NONE'
+        amt_of_item = pyboy.memory[count]
+        inventory.append("{} of {}".format(amt_of_item, item_name))
+    return inventory
 
 def run_pyboy():
     global current_frame
@@ -174,6 +187,7 @@ def getAvailableMoves():
 
 @app.route('/state')
 def state():
+    inventory = get_inventory(pyboy=pyboy)
     x,y,map = get_game_coords(pyboy=pyboy)
     regionName = ""
     for region in regions:
@@ -187,7 +201,7 @@ def state():
        if moves[k]:
           movesTxt = movesTxt + k + ","
     for i in range(len(party)):
-        partyAsText += "Pokemon " + str(i+1) + ": " + party[i].name + " HP: " + str(party[i].currentHp) + "/" + str(party[i].maxHp) + "\n"
+        partyAsText += "\tPokemon " + str(i+1) + ": " + party[i].name + " HP: " + str(party[i].currentHp) + "/" + str(party[i].maxHp) + "\n"
     return Response(
        "GameCoords: X: " 
        + str(x) 
@@ -195,9 +209,10 @@ def state():
        + str(y)
        +"\nArea Name:"
        + str(regionName)
-       + "\nParty: " 
+       + "\nParty: \n" 
        + partyAsText
-       + "\nAvailable Key Presses: " + movesTxt,
+       + "\nAvailable Key Presses: " + movesTxt
+       + "\nCurrent Inventory: \n\t" + "\n\t".join(inventory),
        mimetype='text/plain')
 
 @app.route('/collision')
